@@ -12,14 +12,18 @@ class WeatherService {
 
   WeatherService(this.apiKey);
 
-  Future<Weather> getWeather(
-    String cityName,
+  Future<Weather> getWeatherByCoords(
+    double lat,
+    double lon,
   ) async {
     final response = await http.get(
       Uri.parse(
-        '$BASE_URL?q=$cityName&appid=291cef864197d525c10a970bd57d4006&units=metric',
+        '$BASE_URL?lat=$lat&lon=$lon&appid=$apiKey&units=metric',
       ),
     );
+
+    print(response.body);
+
     if (response.statusCode == 200) {
       return Weather.fromJson(
         jsonDecode(response.body),

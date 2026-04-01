@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:weather_app/services/weather_service.dart';
 import 'package:weather_app/models/weather_model.dart';
 
@@ -18,17 +19,41 @@ class _WeatherPageState
   Weather? _weather;
 
   _fetchWeather() async {
-    String cityName = await _weatherService
-        .getCurrentCity();
-
     try {
+      LocationPermission permission =
+          await Geolocator.checkPermission();
+
+      if (permission ==
+          LocationPermission.denied) {
+        permission =
+            await Geolocator.requestPermission();
+      }
+
+      if (permission ==
+              LocationPermission.denied ||
+          permission ==
+              LocationPermission.deniedForever) {
+        throw Exception("Location denied");
+      }
+
+      Position position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: LocationSettings(
+              accuracy: LocationAccuracy.high,
+            ),
+          );
+
       final weather = await _weatherService
-          .getWeather(cityName);
+          .getWeatherByCoords(
+            position.latitude,
+            position.longitude,
+          );
+
       setState(() {
         _weather = weather;
       });
     } catch (e) {
-      print(e);
+      print("ERROR: $e");
     }
   }
 
