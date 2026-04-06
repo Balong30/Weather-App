@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
 import 'package:weather_app/services/weather_service.dart';
 import 'package:weather_app/models/weather_model.dart';
+import 'package:weather_app/models/forecast_model.dart';
 import 'package:weather_app/theme/app_colors.dart';
 
 class WeatherPage extends StatefulWidget {
@@ -22,6 +23,8 @@ class _WeatherPageState extends State<WeatherPage>
   );
 
   Weather? _weather;
+  List<DailyForecast> _forecast = [];
+
   bool _isLoading = true;
 
   late AnimationController _animController;
@@ -50,6 +53,7 @@ class _WeatherPageState extends State<WeatherPage>
 
       LocationPermission permission =
           await Geolocator.checkPermission();
+
       if (permission ==
           LocationPermission.denied) {
         permission =
@@ -79,8 +83,15 @@ class _WeatherPageState extends State<WeatherPage>
             position.longitude,
           );
 
+      final forecast = await _weatherService
+          .getForecastByCoords(
+            position.latitude,
+            position.longitude,
+          );
+
       setState(() {
         _weather = weather;
+        _forecast = forecast;
         _isLoading = false;
       });
 
@@ -189,10 +200,11 @@ class _WeatherPageState extends State<WeatherPage>
                       ),
 
                       const SizedBox(height: 20),
+
+                      /// 🔥 FORECAST CARD
                       FadeTransition(
                         opacity: _fadeAnim,
                         child: Center(
-                          // important: centers the smaller card
                           child: ClipRRect(
                             borderRadius:
                                 BorderRadius.circular(
@@ -209,7 +221,7 @@ class _WeatherPageState extends State<WeatherPage>
                                     const EdgeInsets.symmetric(
                                       vertical: 6,
                                       horizontal:
-                                          8, // small side padding
+                                          8,
                                     ),
                                 decoration: BoxDecoration(
                                   color: Colors
@@ -232,29 +244,31 @@ class _WeatherPageState extends State<WeatherPage>
                                 child: Row(
                                   mainAxisSize:
                                       MainAxisSize
-                                          .min, // 🔥 KEY: shrink to content
-                                  children: List.generate(5, (
-                                    index,
+                                          .min,
+                                  children: _forecast.take(5).map((
+                                    dayWeather,
                                   ) {
-                                    final date =
-                                        DateTime.now().add(
-                                          Duration(
-                                            days:
-                                                index,
-                                          ),
-                                        );
                                     final day =
                                         DateFormat(
                                           'E',
                                         ).format(
-                                          date,
+                                          dayWeather
+                                              .date,
                                         );
 
+                                    final avgTemp =
+                                        ((dayWeather
+                                                .tempMin +
+                                            dayWeather
+                                                .tempMax) /
+                                        2);
+
                                     return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal:
-                                            6,
-                                      ), // tight spacing
+                                      padding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal:
+                                                6,
+                                          ),
                                       child: Column(
                                         mainAxisSize:
                                             MainAxisSize
@@ -274,19 +288,26 @@ class _WeatherPageState extends State<WeatherPage>
                                             height:
                                                 2,
                                           ),
+
+                                          /// 🔥 DYNAMIC LOTTIE
                                           Lottie.asset(
-                                            'lib/assets/sunny.json',
+                                            _getWeatherAnimation(
+                                              dayWeather.mainCondition,
+                                            ),
                                             width:
                                                 34,
                                             height:
                                                 34,
                                           ),
+
                                           const SizedBox(
                                             height:
                                                 2,
                                           ),
+
+                                          /// 🔥 REAL TEMP
                                           Text(
-                                            '${30 + index}°',
+                                            '${avgTemp.round()}°',
                                             style: TextStyle(
                                               color:
                                                   textColor,
@@ -297,7 +318,7 @@ class _WeatherPageState extends State<WeatherPage>
                                         ],
                                       ),
                                     );
-                                  }),
+                                  }).toList(),
                                 ),
                               ),
                             ),
