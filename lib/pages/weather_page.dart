@@ -19,7 +19,7 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage>
     with SingleTickerProviderStateMixin {
   final _weatherService = WeatherService(
-    '291cef864197d525c10a970bd57d4006',
+    'Your API Key Here!',
   );
 
   Weather? _weather;
