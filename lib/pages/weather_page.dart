@@ -276,17 +276,20 @@ class _WeatherPageState extends State<WeatherPage>
                   ),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: _forecast
-                    .map(
-                      (dayWeather) =>
-                          _buildForecastDay(
-                            dayWeather,
-                            textColor,
-                          ),
-                    )
-                    .toList(),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _forecast
+                      .map(
+                        (dayWeather) =>
+                            _buildForecastDay(
+                              dayWeather,
+                              textColor,
+                            ),
+                      )
+                      .toList(),
+                ),
               ),
             ),
           ),
@@ -357,7 +360,7 @@ class _WeatherPageState extends State<WeatherPage>
       case 'rain':
       case 'drizzle':
       case 'shower rain':
-        return 'lib/assets/rain.json';
+        return 'lib/assets/partly_shower.json';
       case 'thunderstorm':
         return 'lib/assets/storm.json';
       case 'clear':
