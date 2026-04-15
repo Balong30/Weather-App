@@ -1,13 +1,15 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:lottie/lottie.dart';
-import 'package:intl/intl.dart';
-
 import 'package:weather_app/services/weather_service.dart';
 import 'package:weather_app/models/weather_model.dart';
 import 'package:weather_app/models/forecast_model.dart';
 import 'package:weather_app/theme/app_colors.dart';
+import 'package:weather_app/widgets/weather_app_bar.dart';
+import 'package:weather_app/widgets/loading_indicator.dart';
+import 'package:weather_app/widgets/city_weather_header.dart';
+import 'package:weather_app/widgets/temperature_display.dart';
+import 'package:weather_app/widgets/weather_condition_text.dart';
+import 'package:weather_app/widgets/forecast_card.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
@@ -24,9 +26,6 @@ class _WeatherPageState extends State<WeatherPage>
       '291cef864197d525c10a970bd57d4006';
   static const int _forecastDays = 5;
   static const int _animDurationMs = 800;
-  static const double _animBlurSigma = 8.0;
-  static const double _cardBorderRadius = 16.0;
-  static const double _forecardIconSize = 34.0;
 
   // --- Services & State ---
   final _weatherService = WeatherService(_apiKey);
@@ -171,39 +170,14 @@ class _WeatherPageState extends State<WeatherPage>
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: _buildAppBar(textColor),
+        appBar: WeatherAppBar(
+          textColor: textColor,
+        ),
         body: SafeArea(
           child: _isLoading
-              ? _buildLoadingState()
+              ? const LoadingIndicator()
               : _buildWeatherContent(textColor),
         ),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(
-    Color textColor,
-  ) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      iconTheme: IconThemeData(color: textColor),
-      actions: [
-        IconButton(
-          icon: const Icon(
-            Icons.menu,
-            color: AppColors.primaryWhite,
-          ),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return const Center(
-      child: CircularProgressIndicator(
-        color: AppColors.primaryWhite,
       ),
     );
   }
@@ -214,184 +188,32 @@ class _WeatherPageState extends State<WeatherPage>
         mainAxisAlignment:
             MainAxisAlignment.center,
         children: [
-          _buildCityAndIcon(textColor),
+          CityWeatherHeader(
+            cityName: _weather?.cityName ?? '',
+            mainCondition:
+                _weather?.mainCondition,
+            textColor: textColor,
+          ),
           const SizedBox(height: 10),
-          _buildTemperature(textColor),
+          TemperatureDisplay(
+            temperature:
+                _weather?.temperature ?? 0,
+            textColor: textColor,
+          ),
           const SizedBox(height: 6),
-          _buildWeatherCondition(textColor),
+          WeatherConditionText(
+            condition:
+                _weather?.mainCondition ?? '',
+            textColor: textColor,
+          ),
           const SizedBox(height: 20),
-          _buildForecastCard(textColor),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCityAndIcon(Color textColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          _weather?.cityName.toUpperCase() ?? '',
-          style: TextStyle(
-            fontSize: 18,
-            color: textColor.withOpacity(0.7),
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Lottie.asset(
-          _getWeatherAnimation(
-            _weather?.mainCondition,
-          ),
-          width: 100,
-          height: 100,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTemperature(Color textColor) {
-    return Text(
-      '${_weather?.temperature.round() ?? 0}°',
-      style: TextStyle(
-        fontSize: 42,
-        color: textColor,
-      ),
-    );
-  }
-
-  Widget _buildWeatherCondition(Color textColor) {
-    return Text(
-      _weather?.mainCondition ?? '',
-      style: TextStyle(
-        fontSize: 16,
-        color: textColor.withOpacity(0.7),
-      ),
-    );
-  }
-
-  Widget _buildForecastCard(Color textColor) {
-    return FadeTransition(
-      opacity: _fadeAnim,
-      child: Center(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(
-            _cardBorderRadius,
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: _animBlurSigma,
-              sigmaY: _animBlurSigma,
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 6,
-                horizontal: 8,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(
-                  0.07,
-                ),
-                borderRadius:
-                    BorderRadius.circular(
-                      _cardBorderRadius,
-                    ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(
-                    0.12,
-                  ),
-                ),
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: _forecast
-                      .map(
-                        (day) =>
-                            _buildForecastDay(
-                              day,
-                              textColor,
-                            ),
-                      )
-                      .toList(),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildForecastDay(
-    DailyForecast dayWeather,
-    Color textColor,
-  ) {
-    final dayLabel = DateFormat(
-      'E',
-    ).format(dayWeather.date);
-    final avgTemp =
-        ((dayWeather.tempMin +
-            dayWeather.tempMax) /
-        2);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            dayLabel,
-            style: TextStyle(
-              color: textColor.withOpacity(0.7),
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Lottie.asset(
-            _getWeatherAnimation(
-              dayWeather.mainCondition,
-            ),
-            width: _forecardIconSize,
-            height: _forecardIconSize,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${avgTemp.round()}°',
-            style: TextStyle(
-              color: textColor,
-              fontSize: 11,
-            ),
+          ForecastCard(
+            forecast: _forecast,
+            fadeAnimation: _fadeAnim,
+            textColor: textColor,
           ),
         ],
       ),
     );
-  }
-
-  String _getWeatherAnimation(
-    String? mainCondition,
-  ) {
-    switch (mainCondition?.toLowerCase()) {
-      case 'clouds':
-      case 'mist':
-      case 'smoke':
-      case 'haze':
-      case 'dust':
-      case 'fog':
-        return 'lib/assets/cloudy.json';
-      case 'rain':
-      case 'drizzle':
-      case 'shower rain':
-        return 'lib/assets/partly_shower.json';
-      case 'thunderstorm':
-        return 'lib/assets/storm.json';
-      case 'clear':
-        return 'lib/assets/sunny.json';
-      default:
-        return 'lib/assets/sunny.json';
-    }
   }
 }
